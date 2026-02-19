@@ -9,6 +9,7 @@ pipeline {
 
         stage('Checkout Code') {
             steps {
+                 git branch: 'main',
                 git 'https://github.com/sdarshandeshpande-395/multi-env-project.git'
             }
         }
