@@ -1,20 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cicd-app
-  namespace: dev
+  name: qa-app
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
-      app: cicd-app
+      app: qa-app
   template:
     metadata:
       labels:
-        app: cicd-app
+        app: qa-app
     spec:
       containers:
-      - name: cicd-app
-        image: DOCKERHUB_USERNAME/cicd-app:latest
+      - name: qa-app
+        image: sudarshan2244/multi-env-app:latest
         ports:
         - containerPort: 3000

@@ -3,70 +3,49 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = "sudarshan2244/multi-env-app"
-        GIT_REPO = "https://github.com/sdarshandeshpande-395/multi-env-project.git"
+        DOCKER_TAG = "latest"
     }
 
     stages {
 
         stage('Checkout Code') {
             steps {
-                git branch: 'main', url: "${GIT_REPO}"
+                git 'https://github.com/sdarshandeshpande-395/multi-env-project.git'
             }
         }
 
-        stage('Install Dependencies') {
-    steps {
-        dir('app.json') {
-            sh 'npm install'
-        }
-    }
-}
-
-
         stage('Build Docker Image') {
-    steps {
-        sh 'docker build -t $DOCKER_IMAGE -f app.json/Dockerfile app.json'
-    }
-}
-
-
+            steps {
+                sh 'docker build -t $DOCKER_IMAGE:$DOCKER_TAG .'
+            }
+        }
 
         stage('Push to DockerHub') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'docker-cred',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
-                    sh '''
-                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                    docker push $DOCKER_IMAGE
-                    '''
+                withDockerRegistry([credentialsId: 'dockerhub', url: '']) {
+                    sh 'docker push $DOCKER_IMAGE:$DOCKER_TAG'
                 }
             }
         }
 
         stage('Deploy to Dev') {
             steps {
-                sh 'kubectl apply -f k8s/dev/'
+                sh 'kubectl apply -f k8s/dev-deployment.yaml'
+                sh 'kubectl apply -f k8s/service.yaml'
             }
         }
 
         stage('Deploy to QA') {
             steps {
-                sh 'kubectl apply -f k8s/qa/'
-            }
-        }
-
-        stage('Approval for Prod') {
-            steps {
-                input message: "Deploy to Production?"
+                input message: "Deploy to QA?"
+                sh 'kubectl apply -f k8s/qa-deployment.yaml'
             }
         }
 
         stage('Deploy to Prod') {
             steps {
-                sh 'kubectl apply -f k8s/prod/'
+                input message: "Deploy to Production?"
+                sh 'kubectl apply -f k8s/prod-deployment.yaml'
             }
         }
     }
