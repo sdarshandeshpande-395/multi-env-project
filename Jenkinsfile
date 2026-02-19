@@ -15,16 +15,19 @@ pipeline {
         }
 
         stage('Install Dependencies') {
-            steps {
-                sh 'npm install'
-            }
+    steps {
+        dir('app') {
+            sh 'npm install'
         }
+    }
+}
 
         stage('Build Docker Image') {
-            steps {
-                sh 'docker build -t $DOCKER_IMAGE .'
-            }
-        }
+    steps {
+        sh 'docker build -t $DOCKER_IMAGE .'
+    }
+}
+
 
         stage('Push to DockerHub') {
             steps {
