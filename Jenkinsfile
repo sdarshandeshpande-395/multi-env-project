@@ -16,17 +16,19 @@ pipeline {
 
         stage('Install Dependencies') {
     steps {
-        dir('app') {
+        dir('app.json') {
             sh 'npm install'
         }
     }
 }
 
+
         stage('Build Docker Image') {
     steps {
-        sh 'docker build -t $DOCKER_IMAGE .'
+        sh 'docker build -t $DOCKER_IMAGE -f app.json/Dockerfile app.json'
     }
 }
+
 
 
         stage('Push to DockerHub') {
