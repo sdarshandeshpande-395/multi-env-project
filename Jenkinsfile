@@ -3,30 +3,39 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = "sudarshan2244/multi-env-app"
+        GIT_REPO = "https://github.com/sdarshandeshpande-395/multi-env-project.git"
     }
 
     stages {
 
         stage('Checkout Code') {
             steps {
-                 git branch: 'main',
-                git 'https://github.com/sdarshandeshpande-395/multi-env-project.git'
+                git branch: 'main', url: "${GIT_REPO}"
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm install'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE:latest .'
+                sh 'docker build -t $DOCKER_IMAGE .'
             }
         }
 
         stage('Push to DockerHub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-creds',
-                    usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                withCredentials([usernamePassword(
+                    credentialsId: 'docker-cred',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
                     sh '''
-                    echo $PASS | docker login -u $USER --password-stdin
-                    docker push $DOCKER_IMAGE:latest
+                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                    docker push $DOCKER_IMAGE
                     '''
                 }
             }
@@ -34,13 +43,13 @@ pipeline {
 
         stage('Deploy to Dev') {
             steps {
-                sh 'kubectl apply -f k8s/dev/ -n dev'
+                sh 'kubectl apply -f k8s/dev/'
             }
         }
 
         stage('Deploy to QA') {
             steps {
-                sh 'kubectl apply -f k8s/qa/ -n qa'
+                sh 'kubectl apply -f k8s/qa/'
             }
         }
 
@@ -52,7 +61,7 @@ pipeline {
 
         stage('Deploy to Prod') {
             steps {
-                sh 'kubectl apply -f k8s/prod/ -n prod'
+                sh 'kubectl apply -f k8s/prod/'
             }
         }
     }
